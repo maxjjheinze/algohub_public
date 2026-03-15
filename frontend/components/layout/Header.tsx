@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Activity, Eye, LogOut } from "lucide-react";
+import { Activity, Eye } from "lucide-react";
 
 export function Header({ views }: { views: number | null }) {
   const [now, setNow] = useState<Date>(new Date());
@@ -76,15 +76,6 @@ export function Header({ views }: { views: number | null }) {
             {views !== null ? views.toLocaleString() : "---"}
           </div>
         </div>
-        <form action="/api/auth/logout" method="POST">
-          <button
-            type="submit"
-            title="Sign out"
-            className="text-slate-700 hover:text-slate-400 transition-colors duration-200"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </form>
       </motion.div>
     </header>
   );
