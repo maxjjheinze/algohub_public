@@ -33,8 +33,8 @@ seed.py ──▶ SQLite ◀── Backend (FastAPI) ◀── Frontend (Next.js
 ### 1. Clone and seed
 
 ```bash
-git clone https://github.com/maxjjheinze/algo-hub.git
-cd algo-hub
+git clone https://github.com/maxjjheinze/algohub_public.git
+cd algohub_public
 python3 seed/seed.py
 ```
 
