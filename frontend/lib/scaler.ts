@@ -12,7 +12,7 @@ export function obfuscateAccountNumber(real: string): string {
 
 function scale(value: unknown): number | null {
   if (value == null || typeof value !== "number") return value as null;
-  return value * SCALE_FACTOR;
+  return Math.round(value * SCALE_FACTOR * 100) / 100;
 }
 
 function scaleAccountCards(data: Record<string, unknown>[]): Record<string, unknown>[] {
