@@ -32,8 +32,7 @@ async function forward(request: NextRequest, context: RouteContext): Promise<Res
     const alreadyCounted = request.cookies.get(VIEW_COOKIE)?.value === "1";
 
     if (alreadyCounted) {
-      // Return current count without incrementing
-      const viewsUrl = `${API_BASE}/views`;
+      const viewsUrl = `${API_BASE}/views?source=public`;
       const res = await fetch(viewsUrl, {
         headers: { "X-ALGOHUB-KEY": API_KEY },
         cache: "no-store",
@@ -42,8 +41,8 @@ async function forward(request: NextRequest, context: RouteContext): Promise<Res
       return Response.json(json, { status: res.status });
     }
 
-    // First visit: increment and set cookie
-    const incrementUrl = `${API_BASE}/views/increment`;
+    // First visit: increment public counter and set cookie
+    const incrementUrl = `${API_BASE}/views/increment?source=public`;
     const res = await fetch(incrementUrl, {
       method: "POST",
       headers: { "X-ALGOHUB-KEY": API_KEY },
@@ -56,6 +55,17 @@ async function forward(request: NextRequest, context: RouteContext): Promise<Res
       `${VIEW_COOKIE}=1; Path=/; HttpOnly; SameSite=Lax; Max-Age=${VIEW_COOKIE_MAX_AGE}`
     );
     return response;
+  }
+
+  // Views GET also uses public counter
+  if (path.join("/") === "views" && request.method === "GET") {
+    const viewsUrl = `${API_BASE}/views?source=public`;
+    const res = await fetch(viewsUrl, {
+      headers: { "X-ALGOHUB-KEY": API_KEY },
+      cache: "no-store",
+    });
+    const json = await res.json();
+    return Response.json(json, { status: res.status });
   }
 
   const upstreamUrl = `${API_BASE}/${path.join("/")}${request.nextUrl.search}`;
