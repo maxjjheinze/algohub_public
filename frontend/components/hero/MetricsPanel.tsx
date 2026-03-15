@@ -9,7 +9,8 @@ import { CURRENCY_SYMBOLS } from "../../lib/constants";
 import type { RangeKey } from "../../lib/apiClient";
 import type { AccountCard, CleanedRow, CurrencyKey } from "../../lib/types";
 
-const HIDDEN = new Set<string>([]);
+import { HIDDEN_ACCOUNTS } from "../../lib/constants";
+const HIDDEN = HIDDEN_ACCOUNTS;
 const RANGE_DAYS: Record<string, number> = { "3d": 3, "7d": 7, "14d": 14, "1m": 30, "3m": 90 };
 
 function MetricBox({

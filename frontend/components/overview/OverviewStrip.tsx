@@ -23,7 +23,7 @@ import { cn } from "../../lib/utils";
 import { AnimatedNumber } from "../ui/AnimatedNumber";
 import { SectionHeading } from "../ui/SectionHeading";
 import { CurrencyToggle } from "../hero/CurrencyToggle";
-import { INACTIVE_ACCOUNTS } from "../../lib/constants";
+import { INACTIVE_ACCOUNTS, HIDDEN_ACCOUNTS } from "../../lib/constants";
 import type { AccountCard, CleanedRow, CurrencyKey, StatsRow } from "../../lib/types";
 
 function MiniMetric({
@@ -241,7 +241,7 @@ export function OverviewStrip({
 
     // Filter hidden accounts FIRST — use for ALL aggregations
     const visibleAccounts = accounts.filter(
-      () => true
+      (a) => !HIDDEN_ACCOUNTS.has(a.account_number)
     );
     const visibleKeys = new Set(
       visibleAccounts.map((a) => `${a.broker}-${a.account_number}`)

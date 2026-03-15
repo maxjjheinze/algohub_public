@@ -11,7 +11,7 @@ import { PortfolioAnalyticsModal } from "../components/modals/PortfolioAnalytics
 import { OverviewStrip } from "../components/overview/OverviewStrip";
 import { Footer } from "../components/layout/Footer";
 import { GlowButton } from "../components/ui/GlowButton";
-import { NEON_PALETTE, INACTIVE_ACCOUNTS, INACTIVE_COLOR } from "../lib/constants";
+import { NEON_PALETTE, INACTIVE_ACCOUNTS, INACTIVE_COLOR, HIDDEN_ACCOUNTS } from "../lib/constants";
 import { getAccounts, getCleaned, getFxRate, getRaw, getStats, getViews, incrementView, deriveHeroFromAccounts, fillAccountSeries, applyLiveFx, getLatestStatsPerAccount, sliceByRange, type RangeKey } from "../lib/apiClient";
 import type { AccountCard, CleanedRow, CurrencyKey, RawRow, StatsRow } from "../lib/types";
 
@@ -75,6 +75,7 @@ export default function Page() {
   // Filter out hidden accounts from display, sort inactive accounts last
   const displayAccounts = useMemo(
     () => fxAccounts
+      .filter(a => !HIDDEN_ACCOUNTS.has(a.account_number))
       .sort((a, b) => {
         const aInactive = INACTIVE_ACCOUNTS.has(`${a.broker}-${a.account_number}`) ? 1 : 0;
         const bInactive = INACTIVE_ACCOUNTS.has(`${b.broker}-${b.account_number}`) ? 1 : 0;

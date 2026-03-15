@@ -27,7 +27,13 @@ export const ANALYTICS_PALETTE = [
 ];
 
 /** Accounts that are no longer actively traded. Keyed by "broker-account_number". */
-export const INACTIVE_ACCOUNTS = new Set<string>([]);
+export const INACTIVE_ACCOUNTS = new Set([
+  "Kudo Trade-426939",
+  "Bullwaves-748165",
+]);
+
+/** Accounts completely hidden from display and metrics (obfuscated numbers). */
+export const HIDDEN_ACCOUNTS = new Set(["532242", "629742"]);
 
 /** Muted dot color for inactive accounts. */
 export const INACTIVE_COLOR = "#475569";
