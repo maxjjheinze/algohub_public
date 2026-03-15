@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --accent: #F59E42;
+  --accent-rgb: 245, 158, 66;
+  --secondary: #FB7185;
+  --bg: #0A0A0A;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ─── Custom diamond cursor ──────────────────────────── */
+*, *::before, *::after {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 1 L11 6 L6 11 L1 6 Z' fill='none' stroke='%23FFFFFF' stroke-width='1.2'/%3E%3C/svg%3E") 6 6, auto;
+}
+a, button, [role="button"], input, select, textarea, label, .cursor-pointer {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 1 L11 6 L6 11 L1 6 Z' fill='none' stroke='%23FFFFFF' stroke-width='1.2'/%3E%3C/svg%3E") 6 6, pointer;
+}
+
+/* Hide scrollbar on page */
+::-webkit-scrollbar { display: none; }
+html { scrollbar-width: none; }
+
+/* Visible scrollbars inside Data Explorer */
+.data-table-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+.data-table-scroll::-webkit-scrollbar { display: block; width: 6px; height: 6px; }
+.data-table-scroll::-webkit-scrollbar-track { background: transparent; }
+.data-table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+.data-table-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+.data-table-scroll::-webkit-scrollbar-corner { background: transparent; }
+
+body {
+  @apply bg-background text-slate-100 antialiased;
+  font-feature-settings: "ss01", "ss02", "cv01";
+}
+
+/* ─── Atmosphere ──────────────────────────────────────── */
+.bg-atmosphere {
+  position: relative;
+  background: #0A0A0A;
+}
+.bg-atmosphere::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -5%, rgba(245,158,66,0.04) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 40% at 80% 20%, rgba(245,158,66,0.015) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 30% at 10% 60%, rgba(245,158,66,0.012) 0%, transparent 50%);
+  z-index: 0;
+}
+.bg-atmosphere::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.8' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E") repeat;
+  z-index: 0;
+}
+
+/* ─── Glass Cards ─────────────────────────────────────── */
+.glass-card {
+  background: linear-gradient(135deg, rgba(14,14,14,0.88) 0%, rgba(18,18,18,0.78) 100%);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.03),
+    0 8px 40px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.03);
+  position: relative;
+  overflow: hidden;
+}
+.glass-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(245,158,66,0.15) 30%, rgba(245,158,66,0.15) 70%, transparent 100%);
+  pointer-events: none;
+}
+
+/* ─── Scanline accent ─────────────────────────────────── */
+.scanline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245,158,66,0.12) 20%, rgba(245,158,66,0.12) 80%, transparent);
+}
+
+/* ─── Pills ───────────────────────────────────────────── */
+.pill {
+  @apply px-3 py-1.5 rounded-lg text-[0.7rem] font-semibold uppercase tracking-wider cursor-pointer transition-all duration-200;
+  background: rgba(255,255,255,0.03);
+  color: rgba(148,163,184,0.7);
+  border: 1px solid transparent;
+}
+.pill:hover {
+  background: rgba(245,158,66,0.06);
+  color: rgba(148,163,184,1);
+}
+.pill-active {
+  background: rgba(245,158,66,0.1);
+  color: #F59E42;
+  border-color: rgba(245,158,66,0.25);
+  box-shadow: 0 0 16px rgba(245,158,66,0.12), inset 0 0 12px rgba(245,158,66,0.04);
+}
+
+/* ─── Neon selection ──────────────────────────────────── */
+.neon-border-selected {
+  border-color: rgba(245,158,66,0.35) !important;
+  box-shadow:
+    0 0 15px rgba(245,158,66,0.2),
+    0 0 40px rgba(245,158,66,0.06),
+    inset 0 1px 0 rgba(245,158,66,0.12),
+    inset 0 0 20px rgba(245,158,66,0.03) !important;
+}
+
+/* ─── Sparklines ──────────────────────────────────────── */
+.sparkline path {
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* ─── Recharts tooltip fix ────────────────────────────── */
+.recharts-tooltip-wrapper { outline: none !important; }
+
+/* ─── Section divider ─────────────────────────────────── */
+.section-rule {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,255,0.04) 15%,
+    rgba(245,158,66,0.08) 50%,
+    rgba(255,255,255,0.04) 85%,
+    transparent 100%
+  );
+}

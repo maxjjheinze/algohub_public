@@ -1,0 +1,156 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Database } from "lucide-react";
+import { Header } from "../components/layout/Header";
+import { HeroSection } from "../components/hero/HeroSection";
+import { AccountSection } from "../components/accounts/AccountSection";
+import { RawDataModal } from "../components/modals/RawDataModal";
+import { AccountDetailModal } from "../components/modals/AccountDetailModal";
+import { PortfolioAnalyticsModal } from "../components/modals/PortfolioAnalyticsModal";
+import { OverviewStrip } from "../components/overview/OverviewStrip";
+import { Footer } from "../components/layout/Footer";
+import { GlowButton } from "../components/ui/GlowButton";
+import { NEON_PALETTE, INACTIVE_ACCOUNTS, INACTIVE_COLOR } from "../lib/constants";
+import { getAccounts, getCleaned, getFxRate, getRaw, getStats, getViews, incrementView, deriveHeroFromAccounts, fillAccountSeries, applyLiveFx, getLatestStatsPerAccount, sliceByRange, type RangeKey } from "../lib/apiClient";
+import type { AccountCard, CleanedRow, CurrencyKey, RawRow, StatsRow } from "../lib/types";
+
+export default function Page() {
+  const [range, setRange] = useState<RangeKey>("all");
+  const [currency, setCurrency] = useState<CurrencyKey>("USD");
+  const [allAccounts, setAllAccounts] = useState<AccountCard[]>([]);
+  const [rawRows, setRawRows] = useState<RawRow[]>([]);
+  const [cleanedRows, setCleanedRows] = useState<CleanedRow[]>([]);
+  const [allStats, setAllStats] = useState<StatsRow[]>([]);
+  const [views, setViews] = useState<number | null>(null);
+  const [fxAudUsd, setFxAudUsd] = useState(0.66);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<AccountCard | null>(null);
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [animateNumbers, setAnimateNumbers] = useState(true);
+
+  const handleRangeChange = useCallback((r: RangeKey) => {
+    setAnimateNumbers(false);
+    setRange(r);
+  }, []);
+
+  const handleCurrencyChange = useCallback((c: CurrencyKey) => {
+    setAnimateNumbers(true);
+    setCurrency(c);
+  }, []);
+
+  // Fetch range-independent data once on mount
+  useEffect(() => {
+    incrementView().then(v => setViews(v.total_views)).catch(() => {});
+    getViews().then(v => setViews(v.total_views)).catch(() => {});
+    getFxRate().then(setFxAudUsd).catch(() => {});
+
+    void (async () => {
+      const [raw, cleaned, stats] = await Promise.all([getRaw(), getCleaned(), getStats()]);
+      setRawRows(raw);
+      setCleanedRows(cleaned);
+      setAllStats(stats);
+    })();
+  }, []);
+
+  // Fetch full account series once (range slicing happens client-side)
+  useEffect(() => {
+    const controller = new AbortController();
+    getAccounts("all", controller.signal)
+      .then(accs => setAllAccounts(fillAccountSeries(accs)))
+      .catch(e => { if (!(e instanceof DOMException && e.name === "AbortError")) throw e; });
+    return () => controller.abort();
+  }, []);
+
+  // Re-derive USD values from native using live FX rate
+  const fxAccounts = useMemo(() => applyLiveFx(allAccounts, fxAudUsd), [allAccounts, fxAudUsd]);
+
+  const statsMap = useMemo(() => getLatestStatsPerAccount(allStats), [allStats]);
+
+  const { heroSeries, heroMetrics, heroEvents } = useMemo(() => {
+    const { series, metrics, events } = deriveHeroFromAccounts(fxAccounts, currency, fxAudUsd);
+    return { heroSeries: sliceByRange(series, range), heroMetrics: metrics, heroEvents: events };
+  }, [fxAccounts, currency, fxAudUsd, range]);
+
+  // Filter out hidden accounts from display, sort inactive accounts last
+  const displayAccounts = useMemo(
+    () => fxAccounts
+      .sort((a, b) => {
+        const aInactive = INACTIVE_ACCOUNTS.has(`${a.broker}-${a.account_number}`) ? 1 : 0;
+        const bInactive = INACTIVE_ACCOUNTS.has(`${b.broker}-${b.account_number}`) ? 1 : 0;
+        return aInactive - bInactive;
+      }),
+    [fxAccounts]
+  );
+
+  const colorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    let activeIdx = 0;
+    displayAccounts.forEach((acc) => {
+      const key = `${acc.broker}-${acc.account_number}`;
+      if (INACTIVE_ACCOUNTS.has(key)) {
+        map.set(key, INACTIVE_COLOR);
+      } else {
+        map.set(key, NEON_PALETTE[activeIdx % NEON_PALETTE.length]);
+        activeIdx++;
+      }
+    });
+    return map;
+  }, [displayAccounts]);
+
+  return (
+    <main className="min-h-screen px-5 py-6 md:px-8 lg:px-12 md:py-8 max-w-[1440px] mx-auto">
+      <Header views={views} />
+
+      <div className="scanline mb-8" />
+
+      <OverviewStrip accounts={fxAccounts} statsMap={statsMap} cleanedRows={cleanedRows} fxAudUsd={fxAudUsd} currency={currency} onCurrencyChange={handleCurrencyChange} onAnalyticsClick={() => setAnalyticsOpen(true)} />
+
+      <HeroSection
+        series={heroSeries}
+        metrics={fxAccounts.length > 0 ? heroMetrics : null}
+        events={heroEvents}
+        range={range}
+        onRangeChange={handleRangeChange}
+        currency={currency}
+        onCurrencyChange={handleCurrencyChange}
+        accounts={fxAccounts}
+        cleanedRows={cleanedRows}
+        fxAudUsd={fxAudUsd}
+        animateNumbers={animateNumbers}
+      />
+
+      <AccountSection
+        accounts={displayAccounts}
+        colorMap={colorMap}
+        statsMap={statsMap}
+        onAccountClick={setSelectedAccount}
+      />
+
+      <Footer />
+
+      <GlowButton onClick={() => setModalOpen(true)}>
+        <Database className="h-5 w-5" />
+      </GlowButton>
+
+      <RawDataModal open={modalOpen} onClose={() => setModalOpen(false)} rows={rawRows} cleanedRows={cleanedRows} statsRows={allStats} />
+
+      <AccountDetailModal
+        account={selectedAccount}
+        onClose={() => setSelectedAccount(null)}
+        color={selectedAccount ? colorMap.get(`${selectedAccount.broker}-${selectedAccount.account_number}`) ?? "#F59E42" : "#F59E42"}
+        stats={selectedAccount ? statsMap.get(`${selectedAccount.broker}:${selectedAccount.account_number}`) ?? null : null}
+        cleanedRows={cleanedRows}
+        fxAudUsd={fxAudUsd}
+      />
+
+      <PortfolioAnalyticsModal
+        open={analyticsOpen}
+        onClose={() => setAnalyticsOpen(false)}
+        accounts={fxAccounts}
+        cleanedRows={cleanedRows}
+        fxAudUsd={fxAudUsd}
+      />
+    </main>
+  );
+}
