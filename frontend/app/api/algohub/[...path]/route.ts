@@ -16,6 +16,13 @@ type RouteContext = {
 const VIEW_COOKIE = "algohub_viewed";
 const VIEW_COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1 year
 
+const BOT_PATTERN = /bot|crawl|spider|slurp|vercel|preview|lighthouse|pingdom|uptimerobot|headless|phantom|selenium/i;
+
+function isBot(request: NextRequest): boolean {
+  const ua = request.headers.get("user-agent") ?? "";
+  return BOT_PATTERN.test(ua) || !ua;
+}
+
 async function forward(request: NextRequest, context: RouteContext): Promise<Response> {
   if (!API_BASE) {
     return Response.json({ detail: "Missing ALGOHUB_API_BASE_URL" }, { status: 500 });
@@ -27,11 +34,11 @@ async function forward(request: NextRequest, context: RouteContext): Promise<Res
 
   const path = context.params.path ?? [];
 
-  // Unique view tracking: skip increment if visitor already counted
+  // Unique view tracking: skip increment for bots or repeat visitors
   if (path.join("/") === "views/increment") {
     const alreadyCounted = request.cookies.get(VIEW_COOKIE)?.value === "1";
 
-    if (alreadyCounted) {
+    if (alreadyCounted || isBot(request)) {
       const viewsUrl = `${API_BASE}/views?source=public`;
       const res = await fetch(viewsUrl, {
         headers: { "X-ALGOHUB-KEY": API_KEY },
