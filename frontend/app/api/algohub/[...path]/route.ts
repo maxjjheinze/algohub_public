@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { transformResponse } from "@/lib/scaler";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -48,14 +49,24 @@ async function forward(request: NextRequest, context: RouteContext): Promise<Res
 
   try {
     const upstreamResponse = await fetch(upstreamUrl, init);
-    const body = await upstreamResponse.arrayBuffer();
+    const upstreamContentType = upstreamResponse.headers.get("content-type") ?? "";
     const responseHeaders = new Headers();
-    const upstreamContentType = upstreamResponse.headers.get("content-type");
 
     if (upstreamContentType) {
       responseHeaders.set("content-type", upstreamContentType);
     }
 
+    // Intercept JSON responses to apply scaling transformations
+    if (upstreamContentType.includes("application/json")) {
+      const json = await upstreamResponse.json();
+      const transformed = transformResponse(path[0], json);
+      return Response.json(transformed, {
+        status: upstreamResponse.status,
+        headers: responseHeaders,
+      });
+    }
+
+    const body = await upstreamResponse.arrayBuffer();
     return new Response(body, {
       status: upstreamResponse.status,
       headers: responseHeaders
