@@ -23,16 +23,24 @@ function isBot(request: NextRequest): boolean {
   return BOT_PATTERN.test(ua) || !ua;
 }
 
+/** Only these first path segments are forwarded to the upstream API. */
+const ALLOWED_PATHS = new Set(["accounts", "cleaned", "stats", "raw", "views", "health"]);
+
 async function forward(request: NextRequest, context: RouteContext): Promise<Response> {
   if (!API_BASE) {
-    return Response.json({ detail: "Missing ALGOHUB_API_BASE_URL" }, { status: 500 });
+    return Response.json({ detail: "Not found" }, { status: 404 });
   }
 
   if (!API_KEY) {
-    return Response.json({ detail: "Missing ALGOHUB_KEY" }, { status: 500 });
+    return Response.json({ detail: "Not found" }, { status: 404 });
   }
 
   const path = context.params.path ?? [];
+
+  // Block any path not in the allowlist (prevents access to /docs, /openapi.json, /admin, etc.)
+  if (path.length === 0 || !ALLOWED_PATHS.has(path[0])) {
+    return Response.json({ detail: "Not found" }, { status: 404 });
+  }
 
   // Unique view tracking: skip increment for bots or repeat visitors
   if (path.join("/") === "views/increment") {
@@ -118,14 +126,10 @@ async function forward(request: NextRequest, context: RouteContext): Promise<Res
       });
     }
 
-    const body = await upstreamResponse.arrayBuffer();
-    return new Response(body, {
-      status: upstreamResponse.status,
-      headers: responseHeaders
-    });
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : "Unknown proxy error";
-    return Response.json({ detail }, { status: 502 });
+    // Block non-JSON responses to prevent leaking upstream HTML/docs
+    return Response.json({ detail: "Not found" }, { status: 404 });
+  } catch {
+    return Response.json({ detail: "Service unavailable" }, { status: 502 });
   }
 }
 
@@ -137,18 +141,3 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
   return forward(request, context);
 }
 
-export async function PUT(request: NextRequest, context: RouteContext): Promise<Response> {
-  return forward(request, context);
-}
-
-export async function PATCH(request: NextRequest, context: RouteContext): Promise<Response> {
-  return forward(request, context);
-}
-
-export async function DELETE(request: NextRequest, context: RouteContext): Promise<Response> {
-  return forward(request, context);
-}
-
-export async function OPTIONS(request: NextRequest, context: RouteContext): Promise<Response> {
-  return forward(request, context);
-}

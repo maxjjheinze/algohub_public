@@ -4,9 +4,7 @@ const nextConfig = {
   experimental: {
     appDir: true
   },
-  env: {
-    AUTH_PASSWORD: process.env.AUTH_PASSWORD,
-  }
+  env: {}
 };
 
 export default nextConfig;
