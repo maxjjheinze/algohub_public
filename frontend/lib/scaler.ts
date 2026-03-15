@@ -1,5 +1,12 @@
 const SCALE_FACTOR = 5;
 
+/** Fields stripped from all responses to avoid leaking private data. */
+const STRIP_FIELDS = ["account_name", "gmail_message_id", "ingested_at"];
+
+function stripSensitive(row: Record<string, unknown>): void {
+  for (const f of STRIP_FIELDS) delete row[f];
+}
+
 /** Deterministic hash-based obfuscation: djb2 hash → 6-digit number string. */
 export function obfuscateAccountNumber(real: string): string {
   let hash = 5381;
@@ -32,6 +39,8 @@ function scaleAccountCards(data: Record<string, unknown>[]): Record<string, unkn
       if (f in scaled) scaled[f] = scale(scaled[f]);
     }
 
+    stripSensitive(scaled);
+
     if (typeof scaled.account_number === "string") {
       scaled.account_number = obfuscateAccountNumber(scaled.account_number as string);
     }
@@ -58,6 +67,7 @@ function scaleCleanedRows(data: Record<string, unknown>[]): Record<string, unkno
 
   return data.map(row => {
     const scaled: Record<string, unknown> = { ...row };
+    stripSensitive(scaled);
     for (const f of fields) {
       if (f in scaled) scaled[f] = scale(scaled[f]);
     }
@@ -76,6 +86,7 @@ function scaleStatsRows(data: Record<string, unknown>[]): Record<string, unknown
 
   return data.map(row => {
     const scaled: Record<string, unknown> = { ...row };
+    stripSensitive(scaled);
     for (const f of fields) {
       if (f in scaled) scaled[f] = scale(scaled[f]);
     }
@@ -91,6 +102,7 @@ function scaleRawRows(data: Record<string, unknown>[]): Record<string, unknown>[
 
   return data.map(row => {
     const scaled: Record<string, unknown> = { ...row };
+    stripSensitive(scaled);
     for (const f of fields) {
       if (f in scaled) scaled[f] = scale(scaled[f]);
     }

@@ -1,8 +1,8 @@
 # Algo Hub
 
-A premium algo-trading analytics dashboard built with Next.js and FastAPI. This is a public demo version powered by synthetic data — the real version tracks live trading accounts via an ETL pipeline.
+A premium algo-trading analytics dashboard built with Next.js. This public version proxies live data from a private backend with scaled values.
 
-![Dashboard](https://img.shields.io/badge/status-demo-orange)
+![Dashboard](https://img.shields.io/badge/status-live-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 ## Features
@@ -19,71 +19,36 @@ A premium algo-trading analytics dashboard built with Next.js and FastAPI. This 
 ## Architecture
 
 ```
-seed.py ──▶ SQLite ◀── Backend (FastAPI) ◀── Frontend (Next.js)
+Private VPS (FastAPI) ◀── Next.js API Proxy (5x scaling) ◀── Frontend (React)
 ```
 
 | Layer | Tech | Purpose |
 |-------|------|---------|
-| **Seed** | Python (stdlib) | Generates synthetic trading data |
-| **Backend** | FastAPI + SQLite | REST API serving dashboard data |
+| **API Proxy** | Next.js API Routes | Forwards requests to private backend, applies 5x scaling and account obfuscation |
 | **Frontend** | Next.js 14, Tailwind, Recharts | Interactive dashboard UI |
 
 ## Quick Start
 
-### 1. Clone and seed
-
 ```bash
 git clone https://github.com/maxjjheinze/algohub_public.git
-cd algohub_public
-python3 seed/seed.py
-```
-
-### 2. Start the backend
-
-```bash
-cd backend
-./run_dev.sh
-# API running at http://localhost:8000
-```
-
-### 3. Start the frontend
-
-```bash
-cd frontend
-cp ../.env.example .env.local
+cd algohub_public/frontend
+cp .env.example .env.local
+# Edit .env.local with your API URL and key
 npm install
 npm run dev
 # Dashboard at http://localhost:3000
 ```
 
-## Demo Accounts
+## Environment Variables
 
-| Broker | Account | Strategy | Currency | Style |
-|--------|---------|----------|----------|-------|
-| Apex Trading | 100234 | Trend Rider v3 | USD | Steady grower, ~55% win rate |
-| Apex Trading | 100567 | Scalper Pro | USD | Volatile, ~65% win rate |
-| Nova Markets | 200891 | Grid Master | AUD | Consistent with a major drawdown |
-| Titan FX | 300456 | Momentum Alpha | USD | Aggressive, 90-day track record |
-
-## API Endpoints
-
-All endpoints require `X-ALGOHUB-KEY` header (default: `dev-key`).
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/health` | Health check |
-| GET | `/accounts?range=all` | Account cards with time series |
-| GET | `/cleaned` | Cleaned daily data |
-| GET | `/stats` | Computed statistics |
-| GET | `/raw` | Raw daily statements |
-| GET | `/views` | View counter |
-| POST | `/views/increment` | Increment view counter |
+| Variable | Description |
+|----------|-------------|
+| `ALGOHUB_API_BASE_URL` | Base URL of the private AlgoHub API |
+| `ALGOHUB_KEY` | API key for authenticating with the private backend |
 
 ## Tech Stack
 
 - **Frontend:** Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS, Recharts, Framer Motion
-- **Backend:** FastAPI, Pydantic, SQLite, python-dateutil
-- **Seed:** Python stdlib (`random`, `sqlite3`)
 
 ## License
 
