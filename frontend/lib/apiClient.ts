@@ -279,6 +279,16 @@ export async function getCleaned(): Promise<CleanedRow[]> {
   return fetchBackend("cleaned", "/cleaned");
 }
 
+/** Fetch accounts, cleaned, stats, and raw in a single request. */
+export async function getBundle(): Promise<{
+  accounts: AccountCard[];
+  cleaned: CleanedRow[];
+  stats: StatsRow[];
+  raw: RawRow[];
+}> {
+  return fetchBackend("bundle", "/bundle");
+}
+
 export async function getFxRate(): Promise<number> {
   try {
     const res = await fetch("/api/fx", { cache: "no-store" });

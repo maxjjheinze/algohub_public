@@ -12,7 +12,7 @@ import { OverviewStrip } from "../components/overview/OverviewStrip";
 import { Footer } from "../components/layout/Footer";
 import { GlowButton } from "../components/ui/GlowButton";
 import { NEON_PALETTE, INACTIVE_ACCOUNTS, INACTIVE_COLOR, HIDDEN_ACCOUNTS } from "../lib/constants";
-import { getAccounts, getCleaned, getFxRate, getRaw, getStats, getViews, incrementView, deriveHeroFromAccounts, fillAccountSeries, applyLiveFx, getLatestStatsPerAccount, sliceByRange, type RangeKey } from "../lib/apiClient";
+import { getBundle, getFxRate, getViews, incrementView, deriveHeroFromAccounts, fillAccountSeries, applyLiveFx, getLatestStatsPerAccount, sliceByRange, type RangeKey } from "../lib/apiClient";
 import type { AccountCard, CleanedRow, CurrencyKey, RawRow, StatsRow } from "../lib/types";
 
 export default function Page() {
@@ -39,27 +39,23 @@ export default function Page() {
     setCurrency(c);
   }, []);
 
-  // Fetch range-independent data once on mount
+  // Single /bundle endpoint returns accounts + cleaned + stats + raw in one
+  // request. FX rate fetched in parallel. All state set in one batch.
   useEffect(() => {
     incrementView().then(v => setViews(v.total_views)).catch(() => {});
     getViews().then(v => setViews(v.total_views)).catch(() => {});
-    getFxRate().then(setFxAudUsd).catch(() => {});
 
     void (async () => {
-      const [raw, cleaned, stats] = await Promise.all([getRaw(), getCleaned(), getStats()]);
-      setRawRows(raw);
-      setCleanedRows(cleaned);
-      setAllStats(stats);
+      const [bundle, fx] = await Promise.all([
+        getBundle(),
+        getFxRate().catch(() => 0.66),
+      ]);
+      setRawRows(bundle.raw);
+      setCleanedRows(bundle.cleaned);
+      setAllStats(bundle.stats);
+      setAllAccounts(fillAccountSeries(bundle.accounts));
+      setFxAudUsd(fx);
     })();
-  }, []);
-
-  // Fetch full account series once (range slicing happens client-side)
-  useEffect(() => {
-    const controller = new AbortController();
-    getAccounts("all", controller.signal)
-      .then(accs => setAllAccounts(fillAccountSeries(accs)))
-      .catch(e => { if (!(e instanceof DOMException && e.name === "AbortError")) throw e; });
-    return () => controller.abort();
   }, []);
 
   // Re-derive USD values from native using live FX rate
