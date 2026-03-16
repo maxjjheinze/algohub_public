@@ -24,7 +24,7 @@ function isBot(request: NextRequest): boolean {
 }
 
 /** Only these first path segments are forwarded to the upstream API. */
-const ALLOWED_PATHS = new Set(["accounts", "cleaned", "stats", "raw", "views", "health"]);
+const ALLOWED_PATHS = new Set(["accounts", "cleaned", "stats", "raw", "views", "health", "bundle"]);
 
 async function forward(request: NextRequest, context: RouteContext): Promise<Response> {
   if (!API_BASE) {

@@ -115,6 +115,16 @@ function scaleRawRows(data: Record<string, unknown>[]): Record<string, unknown>[
 
 /** Route to correct scaler based on the first path segment of the API endpoint. */
 export function transformResponse(path: string, data: unknown): unknown {
+  if (path === "bundle" && data && typeof data === "object" && !Array.isArray(data)) {
+    const bundle = data as Record<string, unknown>;
+    return {
+      accounts: Array.isArray(bundle.accounts) ? scaleAccountCards(bundle.accounts as Record<string, unknown>[]) : bundle.accounts,
+      cleaned: Array.isArray(bundle.cleaned) ? scaleCleanedRows(bundle.cleaned as Record<string, unknown>[]) : bundle.cleaned,
+      stats: Array.isArray(bundle.stats) ? scaleStatsRows(bundle.stats as Record<string, unknown>[]) : bundle.stats,
+      raw: Array.isArray(bundle.raw) ? scaleRawRows(bundle.raw as Record<string, unknown>[]) : bundle.raw,
+    };
+  }
+
   if (!Array.isArray(data)) return data;
 
   switch (path) {
