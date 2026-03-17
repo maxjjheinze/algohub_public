@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 const API_BASE = process.env.ALGOHUB_API_BASE_URL?.replace(/\/$/, "");
 const API_KEY = process.env.ALGOHUB_KEY;
 const ADMIN_SECRET = process.env.ALGOHUB_ADMIN_SECRET;
-const VIEW_BASELINE = parseInt(process.env.ALGOHUB_VIEW_BASELINE ?? "0", 10);
+const VIEW_BASELINE = parseInt(process.env.ALGOHUB_VIEW_BASELINE ?? "328", 10);
 
 type RouteContext = {
   params: {
