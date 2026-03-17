@@ -23,6 +23,7 @@ function MetricBox({
   muted,
   animate,
   topRight,
+  decimals = 0,
 }: {
   label: string;
   value: number | string | undefined;
@@ -33,6 +34,7 @@ function MetricBox({
   muted?: boolean;
   animate?: boolean;
   topRight?: React.ReactNode;
+  decimals?: number;
 }) {
   const numVal = typeof value === "number" ? value : undefined;
   const isNumeric = typeof value === "number";
@@ -70,7 +72,7 @@ function MetricBox({
                   {prefix}
                   <AnimatedNumber
                     value={Math.abs(value as number)}
-                    format={(n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    format={(n) => n.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
                     springConfig={{ stiffness: 70, damping: 20 }}
                     animate={animate}
                   />
@@ -95,6 +97,7 @@ function SplitMetricBox({
   prefix,
   rightSuffix,
   animate,
+  decimals = 0,
 }: {
   label: string;
   icon: React.ReactNode;
@@ -107,6 +110,7 @@ function SplitMetricBox({
   prefix?: string;
   rightSuffix?: string;
   animate?: boolean;
+  decimals?: number;
 }) {
   const renderVal = (v: number | string | undefined, pfx?: string, sfx?: string) => {
     if (v === undefined) return "---";
@@ -116,7 +120,7 @@ function SplitMetricBox({
         {pfx}
         <AnimatedNumber
           value={Math.abs(v)}
-          format={(n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          format={(n) => n.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
           springConfig={{ stiffness: 70, damping: 20 }}
           animate={animate}
         />
@@ -394,6 +398,7 @@ export function MetricsPanel({
           colored
           icon={<TrendingUp className="h-3.5 w-3.5 text-slate-500" />}
           animate={animateNumbers}
+          decimals={2}
         />
         <MetricBox
           label="Return"

@@ -6,6 +6,8 @@ export const runtime = "nodejs";
 
 const API_BASE = process.env.ALGOHUB_API_BASE_URL?.replace(/\/$/, "");
 const API_KEY = process.env.ALGOHUB_KEY;
+const ADMIN_SECRET = process.env.ALGOHUB_ADMIN_SECRET;
+const VIEW_BASELINE = parseInt(process.env.ALGOHUB_VIEW_BASELINE ?? "0", 10);
 
 type RouteContext = {
   params: {
@@ -21,6 +23,10 @@ const BOT_PATTERN = /bot|crawl|spider|slurp|vercel|preview|lighthouse|pingdom|up
 function isBot(request: NextRequest): boolean {
   const ua = request.headers.get("user-agent") ?? "";
   return BOT_PATTERN.test(ua) || !ua;
+}
+
+function isAdmin(request: NextRequest): boolean {
+  return !!ADMIN_SECRET && request.cookies.get("algohub_admin")?.value === ADMIN_SECRET;
 }
 
 /** Only these first path segments are forwarded to the upstream API. */
@@ -46,13 +52,14 @@ async function forward(request: NextRequest, context: RouteContext): Promise<Res
   if (path.join("/") === "views/increment") {
     const alreadyCounted = request.cookies.get(VIEW_COOKIE)?.value === "1";
 
-    if (alreadyCounted || isBot(request)) {
+    if (alreadyCounted || isBot(request) || isAdmin(request)) {
       const viewsUrl = `${API_BASE}/views?source=public`;
       const res = await fetch(viewsUrl, {
         headers: { "X-ALGOHUB-KEY": API_KEY },
         cache: "no-store",
       });
       const json = await res.json();
+      json.total_views = Math.max(0, (json.total_views ?? 0) - VIEW_BASELINE);
       return Response.json(json, { status: res.status });
     }
 
@@ -64,6 +71,7 @@ async function forward(request: NextRequest, context: RouteContext): Promise<Res
       cache: "no-store",
     });
     const json = await res.json();
+    json.total_views = Math.max(0, (json.total_views ?? 0) - VIEW_BASELINE);
     const response = Response.json(json, { status: res.status });
     response.headers.set(
       "Set-Cookie",
@@ -80,6 +88,7 @@ async function forward(request: NextRequest, context: RouteContext): Promise<Res
       cache: "no-store",
     });
     const json = await res.json();
+    json.total_views = Math.max(0, (json.total_views ?? 0) - VIEW_BASELINE);
     return Response.json(json, { status: res.status });
   }
 

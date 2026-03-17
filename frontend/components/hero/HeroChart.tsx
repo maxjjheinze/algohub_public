@@ -50,7 +50,7 @@ function CustomTooltip({ active, payload, label, eventMap }: CustomTooltipProps)
       </div>
       {eventAmount != null && (
         <div style={{ marginTop: 4, fontSize: "11px", color: eventAmount > 0 ? "#FFFFFF" : "#94A3B8" }}>
-          {eventAmount > 0 ? "Deposit" : "Withdrawal"}: {eventAmount > 0 ? "+" : "-"}${Math.abs(eventAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {eventAmount > 0 ? "Deposit" : "Withdrawal"}: {eventAmount > 0 ? "+" : "-"}${Math.abs(eventAmount).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
         </div>
       )}
     </div>

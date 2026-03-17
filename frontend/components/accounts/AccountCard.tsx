@@ -65,7 +65,7 @@ export function AccountCard({
             <span className="text-slate-500 text-sm font-normal">{currencySymbol}</span>
             <AnimatedNumber
               value={displayBalance}
-              format={(n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              format={(n) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               springConfig={{ stiffness: 65, damping: 18 }}
             />
           </div>
@@ -79,7 +79,7 @@ export function AccountCard({
           >
             {pnlPositive ? "+" : "-"}{currencySymbol}<AnimatedNumber
               value={Math.abs(displayPnl)}
-              format={(n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              format={(n) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               springConfig={{ stiffness: 65, damping: 18 }}
             />
           </div>
@@ -89,7 +89,7 @@ export function AccountCard({
               gainPositive ? "text-positive/70" : "text-negative/70"
             )}
           >
-            {gainPositive ? "+" : ""}{(account.percent_gain * 100).toFixed(1)}%
+            {gainPositive ? "+" : ""}{(account.percent_gain * 100).toFixed(0)}%
           </div>
         </div>
       </div>

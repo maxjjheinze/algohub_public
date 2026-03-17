@@ -92,7 +92,7 @@ export function ComparisonChart({
                     labelStyle={{ color: "#64748b", fontSize: "10px", fontFamily: "monospace" }}
                     formatter={(val: number, name: string) => {
                       const broker = name.split("-")[0];
-                      return [`${val >= 0 ? "+" : ""}${val.toFixed(1)}%`, broker];
+                      return [`${val >= 0 ? "+" : ""}${val.toFixed(0)}%`, broker];
                     }}
                     cursor={{ stroke: "rgba(255,255,255,0.06)", strokeWidth: 1 }}
                   />

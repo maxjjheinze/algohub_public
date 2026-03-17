@@ -35,6 +35,7 @@ function MiniMetric({
   icon,
   muted,
   topRight,
+  decimals = 0,
 }: {
   label: string;
   value: number | string | undefined;
@@ -44,6 +45,7 @@ function MiniMetric({
   icon: React.ReactNode;
   muted?: boolean;
   topRight?: React.ReactNode;
+  decimals?: number;
 }) {
   const numVal = typeof value === "number" ? value : undefined;
   const isNumeric = typeof value === "number";
@@ -100,7 +102,7 @@ function MiniMetric({
                   {prefix}
                   <AnimatedNumber
                     value={Math.abs(value as number)}
-                    format={(n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    format={(n) => n.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
                     springConfig={{ stiffness: 70, damping: 20 }}
                   />
                   {suffix}
@@ -122,6 +124,7 @@ function SplitMetric({
   rightLabel,
   rightColor,
   prefix,
+  decimals = 0,
 }: {
   label: string;
   icon: React.ReactNode;
@@ -132,6 +135,7 @@ function SplitMetric({
   rightLabel: string;
   rightColor: string;
   prefix?: string;
+  decimals?: number;
 }) {
   const renderVal = (v: number | string | undefined) => {
     if (v === undefined) return "---";
@@ -141,7 +145,7 @@ function SplitMetric({
         {prefix}
         <AnimatedNumber
           value={Math.abs(v)}
-          format={(n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          format={(n) => n.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
           springConfig={{ stiffness: 70, damping: 20 }}
         />
       </>
@@ -471,6 +475,7 @@ export function OverviewStrip({
             value={toDisplay(metrics?.totalBalanceUsd)}
             prefix={sym}
             icon={<DollarSign className="h-3 w-3 text-slate-500" />}
+            decimals={2}
           />
           <MiniMetric
             label="Total P&L"
@@ -478,6 +483,7 @@ export function OverviewStrip({
             prefix={sym}
             colored
             icon={<TrendingUp className="h-3 w-3 text-slate-500" />}
+            decimals={2}
           />
           <SplitMetric
             label="Deposits / Withdrawals"

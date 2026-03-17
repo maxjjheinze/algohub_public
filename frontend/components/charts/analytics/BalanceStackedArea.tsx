@@ -78,7 +78,7 @@ export function BalanceStackedArea({
           labelStyle={{ color: "#64748b", fontSize: "9px", fontFamily: "monospace" }}
           itemStyle={{ color: "#e2e8f0", fontSize: "10px", fontFamily: "monospace" }}
           formatter={(val: number, name: string) => [
-            `${sym}${(val * fx).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            `${sym}${(val * fx).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
             name.replace(/-/g, " "),
           ]}
           cursor={{ stroke: "rgba(255,255,255,0.06)", strokeWidth: 1 }}

@@ -71,7 +71,7 @@ export function MonthlyWaterfall({
             if (name === "base") return [null, null];
             const pnl = (props.payload?.pnl ?? 0) * fx;
             return [
-              `${pnl >= 0 ? "+" : "-"}${sym}${Math.abs(pnl).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+              `${pnl >= 0 ? "+" : "-"}${sym}${Math.abs(pnl).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
               "P&L",
             ];
           }}

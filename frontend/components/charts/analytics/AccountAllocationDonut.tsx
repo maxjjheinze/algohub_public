@@ -64,7 +64,7 @@ export function AccountAllocationDonut({
               }}
               itemStyle={{ color: "#e2e8f0", fontSize: "8px", fontFamily: "monospace" }}
               formatter={(val: number, _: string, props: { payload?: AllocationEntry }) => [
-                `${sym}${(val * fx).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${((val / total) * 100).toFixed(1)}%)`,
+                `${sym}${(val * fx).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} (${((val / total) * 100).toFixed(0)}%)`,
                 props.payload?.name ?? "",
               ]}
             />
@@ -73,7 +73,7 @@ export function AccountAllocationDonut({
       </div>
       <div className="flex flex-col gap-1.5 min-w-0 overflow-y-auto max-h-full">
         {data.map((entry) => {
-          const pct = ((entry.value / total) * 100).toFixed(1);
+          const pct = ((entry.value / total) * 100).toFixed(0);
           return (
             <div key={entry.key} className="flex items-center gap-2">
               <div

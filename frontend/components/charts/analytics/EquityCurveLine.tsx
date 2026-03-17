@@ -73,7 +73,7 @@ export function CumulativePnlLine({
           formatter={(val: number) => {
             const d = val * fx;
             return [
-              `${d >= 0 ? "+" : "-"}${sym}${Math.abs(d).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+              `${d >= 0 ? "+" : "-"}${sym}${Math.abs(d).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
               "Total P&L",
             ];
           }}

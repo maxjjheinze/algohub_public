@@ -98,7 +98,7 @@ export function CapitalFlowTimeline({
           formatter={(val: number, name: string) => {
             const d = val * fx;
             return [
-              `${d >= 0 ? "+" : "-"}${sym}${Math.abs(d).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+              `${d >= 0 ? "+" : "-"}${sym}${Math.abs(d).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
               name === "deposit" ? "Deposit" : "Withdrawal",
             ];
           }}

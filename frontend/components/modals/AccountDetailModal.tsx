@@ -34,6 +34,7 @@ function MetricBox({
   colored,
   icon,
   muted,
+  decimals = 0,
 }: {
   label: string;
   value: number | string | undefined;
@@ -42,6 +43,7 @@ function MetricBox({
   colored?: boolean;
   icon: React.ReactNode;
   muted?: boolean;
+  decimals?: number;
 }) {
   const numVal = typeof value === "number" ? value : undefined;
   const formatted =
@@ -49,7 +51,7 @@ function MetricBox({
       ? "---"
       : typeof value === "string"
         ? value
-        : `${prefix ?? ""}${Math.abs(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${suffix ?? ""}`;
+        : `${prefix ?? ""}${Math.abs(value).toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}${suffix ?? ""}`;
   const isPositive = numVal === undefined || numVal >= 0;
   const colorClass =
     colored && numVal !== undefined
@@ -88,6 +90,7 @@ function SplitMetricBox({
   icon,
   className,
   muted,
+  decimals = 0,
 }: {
   label: string;
   leftLabel: string;
@@ -103,11 +106,12 @@ function SplitMetricBox({
   icon: React.ReactNode;
   className?: string;
   muted?: boolean;
+  decimals?: number;
 }) {
   const fmtSide = (v: number | string | undefined, pre?: string, suf?: string, clr?: boolean) => {
     if (v === undefined) return { text: "---", cls: muted ? "text-slate-400" : "text-slate-100" };
     if (typeof v === "string") return { text: v, cls: muted ? "text-slate-400" : "text-slate-100" };
-    const abs = Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const abs = Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
     const sign = clr ? (v >= 0 ? "+" : "-") : "";
     const cls = clr ? (v >= 0 ? "text-positive" : "text-negative") : muted ? "text-slate-400" : "text-slate-100";
     return { text: `${sign}${pre ?? ""}${abs}${suf ?? ""}`, cls };
@@ -195,7 +199,7 @@ function DailyPnlChart({ rows, currencySymbol, accentColor }: { rows: CleanedRow
               labelStyle={{ color: "#64748b", fontSize: "8px", fontFamily: "monospace" }}
               itemStyle={{ color: "#e2e8f0", fontSize: "9px", fontFamily: "monospace" }}
               formatter={(val: number) => [
-                `${val >= 0 ? "+" : "-"}${currencySymbol}${Math.abs(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                `${val >= 0 ? "+" : "-"}${currencySymbol}${Math.abs(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
                 "P&L"
               ]}
               cursor={{ fill: "rgba(255,255,255,0.04)" }}
@@ -253,7 +257,7 @@ function MonthlyBreakdown({ rows, currencySymbol }: { rows: CleanedRow[]; curren
                   "text-[0.7rem] font-mono font-semibold tabular-nums min-w-[70px] text-right",
                   positive ? "text-positive" : "text-negative"
                 )}>
-                  {positive ? "+" : "-"}{currencySymbol}{Math.abs(m.pnl).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {positive ? "+" : "-"}{currencySymbol}{Math.abs(m.pnl).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </span>
               </div>
             </div>
@@ -533,7 +537,7 @@ export function AccountDetailModal({
                     </div>
                     <div className="text-xl md:text-2xl text-white font-bold tabular-nums tracking-tight">
                       <span className="text-slate-500 font-normal">{currencySymbol}</span>
-                      {displayBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {displayBalance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </div>
                   </div>
 
@@ -597,7 +601,7 @@ export function AccountDetailModal({
                           }}
                           labelStyle={{ color: "#64748b", fontSize: "10px", fontFamily: "monospace" }}
                           formatter={(val: number) => [
-                            `${currencySymbol}${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                            `${currencySymbol}${val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
                             "Balance"
                           ]}
                           cursor={{ stroke: `${color}26`, strokeWidth: 1, strokeDasharray: "4 4" }}
