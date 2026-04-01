@@ -370,11 +370,17 @@ export function AccountDetailModal({
     const avgWin = wins > 0 ? winPnlSum / wins : undefined;
     const avgLoss = losses > 0 ? lossPnlSum / losses : undefined;
 
-    // Return % — use account-level net contributions as denominator
-    const netContrib = account.base_currency !== "USD" && account.net_contributions_native != null
-      ? account.net_contributions_native
-      : account.net_contributions_usd;
-    const returnPct = netContrib !== 0 ? totalPnl / netContrib : undefined;
+    // Return % — for inactive accounts use total deposits (withdrawals are just
+    // closing the account, not trading activity); otherwise use net contributions.
+    const isInactiveAcct = INACTIVE_ACCOUNTS.has(`${account.broker}-${account.account_number}`);
+    const returnDenom = isInactiveAcct
+      ? (account.base_currency !== "USD" && account.total_deposits_native != null
+          ? account.total_deposits_native
+          : account.total_deposits_usd)
+      : (account.base_currency !== "USD" && account.net_contributions_native != null
+          ? account.net_contributions_native
+          : account.net_contributions_usd);
+    const returnPct = returnDenom !== 0 ? totalPnl / returnDenom : undefined;
 
     // Max drawdown from equity_curve
     let peak = 0;
@@ -459,10 +465,15 @@ export function AccountDetailModal({
   const gradientId = account ? `modal-grad-${account.account_number}` : "modal-grad";
   const strokeId = account ? `modal-stroke-${account.account_number}` : "modal-stroke";
 
+  const isInactive = account ? INACTIVE_ACCOUNTS.has(`${account.broker}-${account.account_number}`) : false;
   const netContrib = account
-    ? (account.base_currency !== "USD" && account.net_contributions_native != null
-      ? account.net_contributions_native
-      : account.net_contributions_usd)
+    ? isInactive
+      ? (account.base_currency !== "USD" && account.total_deposits_native != null
+          ? account.total_deposits_native
+          : account.total_deposits_usd)
+      : (account.base_currency !== "USD" && account.net_contributions_native != null
+          ? account.net_contributions_native
+          : account.net_contributions_usd)
     : 0;
 
   return (

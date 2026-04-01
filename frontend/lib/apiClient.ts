@@ -47,14 +47,18 @@ async function fetchBackend<T>(endpointName: string, path: string, init?: Reques
   return response.json() as Promise<T>;
 }
 
-/** Forward-fill zeros in a series: if a day's balance is 0, carry the previous day's value. */
-function forwardFillSeries<T extends { balance_usd: number }>(series: T[]): T[] {
+/** Forward-fill zeros in a series: if a day's balance is 0 and there was no
+ *  deposit/withdrawal activity, carry the previous day's value (gap day).
+ *  A genuine $0 balance (e.g. full withdrawal) is preserved as-is. */
+function forwardFillSeries<T extends { balance_usd: number; deposit_withdrawal_usd?: number }>(series: T[]): T[] {
   let lastNonZero = 0;
   return series.map(pt => {
     if (pt.balance_usd > 0) {
       lastNonZero = pt.balance_usd;
       return pt;
     }
+    // If there was a deposit/withdrawal, the $0 balance is real — don't overwrite
+    if (pt.deposit_withdrawal_usd) return pt;
     return { ...pt, balance_usd: lastNonZero };
   });
 }
