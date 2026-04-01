@@ -6,6 +6,7 @@ import { ArrowUpRight, ArrowDownRight, TrendingUp, Percent, Target, Activity, Tr
 import { cn } from "../../lib/utils";
 import { AnimatedNumber } from "../ui/AnimatedNumber";
 import { CURRENCY_SYMBOLS } from "../../lib/constants";
+import { computeWorstDrawdownPct } from "../../lib/analyticsData";
 import type { RangeKey } from "../../lib/apiClient";
 import type { AccountCard, CleanedRow, CurrencyKey } from "../../lib/types";
 
@@ -314,51 +315,8 @@ export function MetricsPanel({
     const avgWinUsd = portfolioWins > 0 ? sumWinPnl / portfolioWins : undefined;
     const avgLossUsd = portfolioLosses > 0 ? sumLossPnl / portfolioLosses : undefined;
 
-    // Portfolio drawdown from forward-filled account balance series (range-sliced)
-    const allSeriesDates = new Set<string>();
-    const acctBalMaps: { key: string; map: Map<string, number> }[] = [];
-    for (const acc of visibleAccounts) {
-      const key = `${acc.broker}-${acc.account_number}`;
-      const map = new Map<string, number>();
-      for (const pt of acc.series) {
-        map.set(pt.date, pt.balance_usd);
-        allSeriesDates.add(pt.date);
-      }
-      acctBalMaps.push({ key, map });
-    }
-    // Slice series dates to range
-    const seriesDates = Array.from(allSeriesDates).sort();
-    const rangeSeriesDates = range === "all"
-      ? seriesDates
-      : seriesDates.slice(-(RANGE_DAYS[range] ?? seriesDates.length));
-
-    const lastKnown: Record<string, number> = {};
-    // Forward-fill up to the start of the range window
-    if (range !== "all" && seriesDates.length > rangeSeriesDates.length) {
-      for (const d of seriesDates) {
-        if (d >= rangeSeriesDates[0]) break;
-        for (const { key, map } of acctBalMaps) {
-          const val = map.get(d);
-          if (val !== undefined) lastKnown[key] = val;
-        }
-      }
-    }
-
-    let peakBalance = 0;
-    let worstDrawdownPct = 0;
-    for (const d of rangeSeriesDates) {
-      let totalBal = 0;
-      for (const { key, map } of acctBalMaps) {
-        const val = map.get(d);
-        if (val !== undefined) lastKnown[key] = val;
-        totalBal += lastKnown[key] ?? 0;
-      }
-      if (totalBal > peakBalance) peakBalance = totalBal;
-      if (peakBalance > 0) {
-        const ddPct = ((totalBal - peakBalance) / peakBalance) * 100;
-        if (ddPct < -worstDrawdownPct) worstDrawdownPct = Math.abs(ddPct);
-      }
-    }
+    // Portfolio drawdown adjusted for deposits/withdrawals (only trading losses count)
+    const worstDrawdownPct = computeWorstDrawdownPct(visibleAccounts, range);
 
     return {
       totalPnlUsd,

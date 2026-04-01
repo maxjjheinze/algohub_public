@@ -160,20 +160,131 @@ export function computeAccountAllocation(
 
 export type DrawdownPoint = { date: string; drawdown: number };
 
+/**
+ * Build a portfolio equity curve using TWR (chain-linked daily returns)
+ * from per-account balance + D/W series. This neutralises cash-flow
+ * effects so only trading performance drives the curve.
+ */
+function buildPortfolioEquityCurve(
+  accounts: AccountCard[],
+  filterKeys?: string[]
+): { dates: string[]; curve: number[] } {
+  // Build per-account maps
+  const allDates = new Set<string>();
+  const acctMaps: { key: string; balMap: Map<string, number>; dwMap: Map<string, number> }[] = [];
+
+  for (const acc of accounts) {
+    const key = `${acc.broker}-${acc.account_number}`;
+    if (filterKeys && !filterKeys.includes(key)) continue;
+    const balMap = new Map<string, number>();
+    const dwMap = new Map<string, number>();
+    for (const pt of acc.series) {
+      balMap.set(pt.date, pt.balance_usd);
+      if (pt.deposit_withdrawal_usd) dwMap.set(pt.date, pt.deposit_withdrawal_usd);
+      allDates.add(pt.date);
+    }
+    acctMaps.push({ key, balMap, dwMap });
+  }
+
+  const sortedDates = Array.from(allDates).sort();
+  if (sortedDates.length === 0) return { dates: [], curve: [] };
+
+  // Forward-fill balances and aggregate per date
+  const lastKnown: Record<string, number> = {};
+  const totals: number[] = [];
+  const dws: number[] = [];
+
+  for (const d of sortedDates) {
+    let totalBal = 0;
+    let totalDw = 0;
+    for (const { key, balMap, dwMap } of acctMaps) {
+      const val = balMap.get(d);
+      if (val !== undefined) lastKnown[key] = val;
+      totalBal += lastKnown[key] ?? 0;
+      totalDw += dwMap.get(d) ?? 0;
+    }
+    totals.push(totalBal);
+    dws.push(totalDw);
+  }
+
+  // Chain-link daily returns (same logic as backend equity_curve)
+  const curve: number[] = [1.0];
+  for (let i = 1; i < totals.length; i++) {
+    const adjustedPrev = totals[i - 1] + dws[i];
+    if (adjustedPrev > 0) {
+      const dailyReturn = totals[i] / adjustedPrev;
+      curve.push(curve[curve.length - 1] * dailyReturn);
+    } else {
+      curve.push(curve[curve.length - 1]);
+    }
+  }
+
+  return { dates: sortedDates, curve };
+}
+
+/** Drawdown series from TWR equity curve (only trading losses count). */
 export function computeDrawdownSeries(
   balanceSeries: BalanceStackedPoint[],
-  accountKeys: string[]
+  accountKeys: string[],
+  accounts: AccountCard[]
 ): DrawdownPoint[] {
   if (balanceSeries.length === 0) return [];
 
-  return balanceSeries.map((pt) => {
-    return { date: pt.date, total: accountKeys.reduce((s, k) => s + ((pt[k] as number) ?? 0), 0) };
-  }).reduce<{ peak: number; result: DrawdownPoint[] }>((acc, pt) => {
-    if (pt.total > acc.peak) acc.peak = pt.total;
-    const dd = acc.peak > 0 ? ((acc.peak - pt.total) / acc.peak) * -100 : 0;
-    acc.result.push({ date: pt.date, drawdown: Math.round(dd * 100) / 100 });
-    return acc;
-  }, { peak: 0, result: [] }).result;
+  const { dates, curve } = buildPortfolioEquityCurve(accounts, accountKeys);
+  if (dates.length === 0) return [];
+
+  // Map equity curve values to the balanceSeries dates
+  const curveByDate = new Map<string, number>();
+  for (let i = 0; i < dates.length; i++) curveByDate.set(dates[i], curve[i]);
+
+  let peak = 0;
+  let lastCurveVal = 1.0;
+  const result: DrawdownPoint[] = [];
+
+  for (const pt of balanceSeries) {
+    const d = pt.date as string;
+    const cv = curveByDate.get(d) ?? lastCurveVal;
+    lastCurveVal = cv;
+    if (cv > peak) peak = cv;
+    const dd = peak > 0 ? ((peak - cv) / peak) * -100 : 0;
+    result.push({ date: d, drawdown: Math.round(dd * 100) / 100 });
+  }
+
+  return result;
+}
+
+// ── 6b. Shared Max Drawdown % (TWR-based) ──────────────────────────
+
+const RANGE_DAYS: Record<string, number> = { "3d": 3, "7d": 7, "14d": 14, "1m": 30, "3m": 90 };
+
+/** Compute worst drawdown % from TWR equity curve, adjusted for deposits/withdrawals. */
+export function computeWorstDrawdownPct(
+  accounts: AccountCard[],
+  range?: RangeKey
+): number {
+  if (accounts.length === 0) return 0;
+
+  const { dates, curve } = buildPortfolioEquityCurve(accounts);
+  if (dates.length === 0) return 0;
+
+  // Slice to range
+  const targetCount = (!range || range === "all")
+    ? dates.length
+    : Math.min(RANGE_DAYS[range] ?? dates.length, dates.length);
+  const startIdx = dates.length - targetCount;
+
+  let peak = 0;
+  let worstDd = 0;
+
+  for (let i = startIdx; i < curve.length; i++) {
+    if (curve[i] > peak) peak = curve[i];
+    if (peak > 0) {
+      const dd = ((peak - curve[i]) / peak) * 100;
+      if (dd > worstDd) worstDd = dd;
+    }
+  }
+
+  return worstDd;
 }
 
 // ── 7. P&L Distribution (histogram bins) ─────────────────────────────

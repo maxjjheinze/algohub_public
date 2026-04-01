@@ -175,8 +175,8 @@ export function PortfolioAnalyticsModal({
   );
 
   const drawdownData = useMemo(
-    () => computeDrawdownSeries(balanceData, accountKeys),
-    [balanceData, accountKeys]
+    () => computeDrawdownSeries(balanceData, accountKeys, accounts),
+    [balanceData, accountKeys, accounts]
   );
 
   const pnlDist = useMemo(

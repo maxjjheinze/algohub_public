@@ -197,13 +197,24 @@ export function deriveHeroFromAccounts(
   const avgLoss = losses.length > 0 ? losses.reduce((s, d) => s + d, 0) / losses.length : undefined;
   const expectancy = dailyPnls.length > 0 ? periodPnl / dailyPnls.length : undefined;
 
-  // Max drawdown % from unrounded series (peak-to-trough)
+  // Max drawdown % from TWR equity curve (only trading losses count)
+  // Chain-link daily returns to build equity curve, then peak-to-trough
+  const equityCurve: number[] = [1.0];
+  for (let i = 1; i < rawTotals.length; i++) {
+    const dayDwDD = dwMap.get(sortedEntries[i][0]) ?? 0;
+    const adjPrev = rawTotals[i - 1] + dayDwDD;
+    if (adjPrev > 0) {
+      equityCurve.push(equityCurve[equityCurve.length - 1] * (rawTotals[i] / adjPrev));
+    } else {
+      equityCurve.push(equityCurve[equityCurve.length - 1]);
+    }
+  }
   let peak = 0;
   let maxDrawdownPct = 0;
-  for (const total of rawTotals) {
-    if (total > peak) peak = total;
+  for (const cv of equityCurve) {
+    if (cv > peak) peak = cv;
     if (peak > 0) {
-      const dd = (peak - total) / peak;
+      const dd = (peak - cv) / peak;
       if (dd > maxDrawdownPct) maxDrawdownPct = dd;
     }
   }

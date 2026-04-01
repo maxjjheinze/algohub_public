@@ -24,6 +24,7 @@ import { AnimatedNumber } from "../ui/AnimatedNumber";
 import { SectionHeading } from "../ui/SectionHeading";
 import { CurrencyToggle } from "../hero/CurrencyToggle";
 import { INACTIVE_ACCOUNTS, HIDDEN_ACCOUNTS } from "../../lib/constants";
+import { computeWorstDrawdownPct } from "../../lib/analyticsData";
 import type { AccountCard, CleanedRow, CurrencyKey, StatsRow } from "../../lib/types";
 
 function MiniMetric({
@@ -313,36 +314,8 @@ export function OverviewStrip({
       }
     }
 
-    // Portfolio drawdown from forward-filled account balance series
-    // (cleanedRows has gaps when accounts go inactive, causing false drawdowns)
-    const allSeriesDates = new Set<string>();
-    const acctBalMaps: { key: string; map: Map<string, number> }[] = [];
-    for (const acc of visibleAccounts) {
-      const key = `${acc.broker}-${acc.account_number}`;
-      const map = new Map<string, number>();
-      for (const pt of acc.series) {
-        map.set(pt.date, pt.balance_usd);
-        allSeriesDates.add(pt.date);
-      }
-      acctBalMaps.push({ key, map });
-    }
-    const seriesDates = Array.from(allSeriesDates).sort();
-    const lastKnown: Record<string, number> = {};
-    let peakBalance = 0;
-    let worstDrawdownPct = 0;
-    for (const date of seriesDates) {
-      let totalBal = 0;
-      for (const { key, map } of acctBalMaps) {
-        const val = map.get(date);
-        if (val !== undefined) lastKnown[key] = val;
-        totalBal += lastKnown[key] ?? 0;
-      }
-      if (totalBal > peakBalance) peakBalance = totalBal;
-      if (peakBalance > 0) {
-        const ddPct = ((totalBal - peakBalance) / peakBalance) * 100;
-        if (ddPct < -worstDrawdownPct) worstDrawdownPct = Math.abs(ddPct);
-      }
-    }
+    // Portfolio drawdown adjusted for deposits/withdrawals (only trading losses count)
+    const worstDrawdownPct = computeWorstDrawdownPct(visibleAccounts);
 
     const totalPortfolioTrades = portfolioWins + portfolioLosses;
     const winRate = totalPortfolioTrades > 0 ? portfolioWins / totalPortfolioTrades : undefined;
